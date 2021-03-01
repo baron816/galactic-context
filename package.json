@@ -1,7 +1,7 @@
 {
   "name": "galactic-context",
   "version": "1.0.0",
-  "description": "",
+  "description": "Easy, efficient state management with React Context",
   "main": "index.js",
   "scripts": {
     "lint": "eslint ./src/**",
@@ -16,6 +16,12 @@
   },
   "author": "Baron Willeford",
   "license": "MIT",
+  "keywords": [
+    "React",
+    "hooks",
+    "context",
+    "observer"
+  ],
   "peerDependencies": {
     "react": ">16.8"
   },

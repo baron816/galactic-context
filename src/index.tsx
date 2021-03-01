@@ -99,7 +99,7 @@ export function createGalacticContext<
 
       if (currentObserver == null) {
         throw Error(
-          `${hookName} must be used in a decendent of the StateProvider`
+          `${hookName} must be used in a descendant of the StateProvider`
         );
       }
 
@@ -130,4 +130,10 @@ export function createGalacticContext<
 
 function isFunction(val: any): val is Function {
   return typeof val === "function";
+}
+
+export function privatize<T>(
+  hookPair: (...args: any) => [T, Setter<T>]
+): () => T {
+  return (...args) => hookPair(...args)[0];
 }
