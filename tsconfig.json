@@ -21,7 +21,6 @@
     "**/*.tsx"
   ],
   "exclude": [
-    "node_modules",
     "**/*.test.*"
   ]
 }
