@@ -1,8 +1,9 @@
 {
   "name": "galactic-context",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Easy, efficient state management with React Context",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "lint": "eslint ./src/**",
     "test": "jest --watch",
