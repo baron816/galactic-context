@@ -103,7 +103,7 @@ export function createGalacticContext<
         );
       }
 
-      React.useEffect(() => {
+      React.useLayoutEffect(() => {
         return currentObserver.subscribe(setState);
       }, [currentObserver]);
 
