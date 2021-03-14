@@ -12,12 +12,28 @@ Easy, efficient state management with React Context.
 
 `npm i galactic-context`
 
+## Motivation
+
+If you're using Context for "global" state, you run the risk of rerendering your entire app each time you update a value in a provider. This is because each Provider is a component, and when it rerenders, all of it's children will also rerender.
+
+You can also have complications if you have Provider state values that depend on each other. No Provider can *easily* access the Context values of it's children.
+
+Context also has a lot of boilerplate that would be nice to reduce.
+
+Galactic Context allows you to have a single "StateProvider" to store all of the values you would consider using "globally" across components in your app. It generates "value" and "setter" hooks for you, and when a "setter" hook gets called to update state, only the components consuming the "value" hooks will update (not your entire app).
+
 ## Usage
 
-`createGalacticContext` receives a single argument, an object corresponding to key value pairs, for which the keys will be converted to hooks that function like `useState`, and the values will be the initial default values. It will return an object with a `StateProvider`, a `StateContext`, and hooks for all of the properties in the object you passed in.
+`createGalacticContext` receives a single argument--an object corresponding to key value pairs, for which the resulting object will return an object with a corresponding properties which are tuples of "value" hooks and "setter" hooks. The values in the object are the default values.
+
+`createGalacContext` also includes the `StateProvider`, which will use to wrap your app.
 
 ```javascript
-const { StateProvider, useCounter, useEmail } = createGalacticContext({
+const {
+  StateProvider,
+  counter: [useCounter, useSetCounter],
+  email: [useEmail, useSetEmail],
+} = createGalacticContext({
   counter: 0,
   email: '',
 });
@@ -31,7 +47,8 @@ function App() {
 }
 
 function CounterComponent({ label }) {
-  const [counter, setCounter] = useCounter();
+  const counter = useCounter();
+  const setCounter = useSetCounter();
 
   return (
     <div>
@@ -42,7 +59,8 @@ function CounterComponent({ label }) {
 }
 
 function EmailComponent() {
-  const [email, setEmail] = useEmail();
+  const email = useEmail();
+  const useSetEmail = useSetEmail();
 
   return (
     <input onChange={e => setEmail(e.target.value)} value={email} />
@@ -50,8 +68,6 @@ function EmailComponent() {
 }
 
 ```
-
-`createGalacticContext` creates observers for each property in the object you pass to it. It also creates hooks for each property name with the structure `propertyName` -> `usePropertyName` (`use` is prepended, and the first character is capitalized). That hook will listen for state changes on the observer and set state at the component level. That means the provider won't update itself, and won't rerender the entire app if it's wrapping everything. Only the components that use hooks that update will rerender (plus their descendants).
 
 `createGalacticContext` will include `StateContext` in it's returned object, but it's unlikely you'll need it (you'd probably only want to use it in conjunction with RxJS). It includes the observers for all of the properties, the names of which match the object you passed to `createGalacticContext`.
 
@@ -75,23 +91,4 @@ return (
     <App />
   </StateProvider>
 )
-```
-
-### Privatize
-
-It's possible that you'll want to prevent your components from being able to set a particular state value (perhaps it's reserved for a single place). You can use `privatize` to create a hook that will only return the value and not include the setter.
-
-```javascript
-import { privatize } from 'galactic-context';
-
-...
-
-const useServiceLevel = privatize(useServiceLevelWithSetter);
-
-function MyComponent() {
-  const serviceLevel = useServiceLevel();
-
-  ...
-}
-
 ```

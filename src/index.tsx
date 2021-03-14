@@ -47,9 +47,8 @@ type Context<T> = {
   debug?: string | ((key: string, newValue: any) => void);
 };
 
-type HookMap<T extends Record<string, any>> = {
-  // @ts-ignore
-  [P in keyof T as `use${Capitalize<P>}`]: () => [T[P], Setter<T[P]>];
+type HookMap<T> = {
+  [P in keyof T]: [() => T[P], () => Setter<T[P]>];
 };
 
 type ObserverMap<T> = {
@@ -89,39 +88,41 @@ export function createGalacticContext<
     );
   }
 
-  const hooks = Object.keys(mapping).reduce((acc, key) => {
-    const hookName = `use${upperFirst(key)}`;
-    // @ts-ignore
-    acc[hookName] = () => {
-      const { observers, debug } = React.useContext(StateContext);
+  const hooks = Object.keys(mapping).reduce((acc, key: keyof T) => {
+    function useValue() {
+      const { observers } = React.useContext(StateContext);
       const currentObserver = observers[key];
       const [state, setState] = React.useState(currentObserver.value);
-
-      if (currentObserver == null) {
-        throw Error(
-          `${hookName} must be used in a descendant of the StateProvider`
-        );
-      }
 
       React.useLayoutEffect(() => {
         return currentObserver.subscribe(setState);
       }, [currentObserver]);
 
-      return React.useMemo(() => {
-        function handleSet(newVal: T | ((oldVal: T) => T)) {
+      return state;
+    }
+
+    function useSetter(): Setter<T[keyof T]> {
+      const { observers, debug } = React.useContext(StateContext);
+      const currentObserver = observers[key];
+
+      return React.useCallback(
+        (newVal: T[keyof T] | ((oldVal: T[keyof T]) => T[keyof T])) => {
           if (debug === "*") {
             console.log(key, newVal);
           } else if (isFunction(debug)) {
-            debug(key, newVal);
-          } else if (debug && new RegExp(debug, "g").test(key)) {
+            debug(key as string, newVal);
+          } else if (debug && new RegExp(debug, "g").test(key as string)) {
             console.trace(key, newVal);
           }
           // @ts-ignore
           currentObserver.update(newVal);
-        }
-        return [state, handleSet];
-      }, [state, currentObserver]);
-    };
+        },
+        [currentObserver, debug]
+      );
+    }
+
+    acc[key] = [useValue, useSetter];
+
     return acc;
   }, {} as HookMap<T>);
 
@@ -130,10 +131,4 @@ export function createGalacticContext<
 
 function isFunction(val: any): val is Function {
   return typeof val === "function";
-}
-
-export function privatize<T>(
-  hookPair: (...args: any) => [T, Setter<T>]
-): () => T {
-  return (...args) => hookPair(...args)[0];
 }
