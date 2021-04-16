@@ -6,7 +6,8 @@ describe("createGalactiContext", () => {
   test("simple usage", () => {
     const {
       StateProvider,
-      counter: [useCounter, useSetCounter],
+      getters: { useCounter },
+      setters: { useSetCounter },
     } = createGalacticContext({
       counter: 0,
     });
@@ -28,7 +29,8 @@ describe("createGalactiContext", () => {
   test("multi-set", () => {
     const {
       StateProvider,
-      counter: [useCounter, useSetCounter],
+      getters: { useCounter },
+      setters: { useSetCounter },
     } = createGalacticContext({
       counter: 0,
     });
@@ -51,7 +53,8 @@ describe("createGalactiContext", () => {
   test("setting from cb", () => {
     const {
       StateProvider,
-      counter: [useCounter, useSetCounter],
+      getters: { useCounter },
+      setters: { useSetCounter },
     } = createGalacticContext({
       counter: 15,
     });
@@ -75,9 +78,8 @@ describe("createGalactiContext", () => {
   test("multiple hooks", () => {
     const {
       StateProvider,
-      counter: [useCounter, useSetCounter],
-      name: [useName, useSetName],
-      password: [usePassword, useSetPassword],
+      getters: { useCounter, useName, usePassword },
+      setters: { useSetCounter, useSetName, useSetPassword },
     } = createGalacticContext({
       counter: 15,
       name: "",

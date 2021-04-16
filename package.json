@@ -1,6 +1,6 @@
 {
   "name": "galactic-context",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Easy, efficient state management with React Context",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
