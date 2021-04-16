@@ -47,8 +47,19 @@ type Context<T> = {
   debug?: string | ((key: string, newValue: any) => void);
 };
 
+type SetterMap<T extends Record<string, any>> = {
+  // @ts-ignore
+  [P in keyof T as `useSet${Capitalize<P>}`]: () => Setter<T[P]>;
+};
+
+type GetterMap<T extends Record<string, any>> = {
+  // @ts-ignore
+  [P in keyof T as `use${Capitalize<P>}`]: () => T[P];
+};
+
 type HookMap<T> = {
-  [P in keyof T]: [() => T[P], () => Setter<T[P]>];
+  setters: SetterMap<T>;
+  getters: GetterMap<T>;
 };
 
 type ObserverMap<T> = {
@@ -64,8 +75,15 @@ export function createGalacticContext<
   StateProvider: Provider;
   StateContext: React.Context<Context<T>>;
 } {
+  function createObservers() {
+    return Object.entries(mapping).reduce((acc, [key, val]) => {
+      acc[key as P] = new Observer(val);
+      return acc;
+    }, {} as ObserverMap<T>);
+  }
+
   const StateContext = React.createContext<Context<T>>({
-    observers: {} as ObserverMap<T>,
+    observers: createObservers(),
   });
 
   function StateProvider({
@@ -75,12 +93,7 @@ export function createGalacticContext<
     children: React.ReactElement | React.ReactElement[];
     debug?: string | ((key: string, newValue: any) => void);
   }) {
-    const observers = React.useMemo(() => {
-      return Object.entries(mapping).reduce((acc, [key, val]) => {
-        acc[key as P] = new Observer(val);
-        return acc;
-      }, {} as ObserverMap<T>);
-    }, []);
+    const observers = React.useMemo(() => createObservers(), []);
     return (
       <StateContext.Provider value={{ observers, debug }}>
         {children}
@@ -88,8 +101,10 @@ export function createGalacticContext<
     );
   }
 
-  const hooks = Object.keys(mapping).reduce((acc, key: keyof T) => {
-    function useValue() {
+  const getterHooks = Object.keys(mapping).reduce((acc, key: keyof T) => {
+    const hookName = `use${upperFirst(key as string)}`;
+    // @ts-ignore
+    acc[hookName] = function useValue() {
       const { observers } = React.useContext(StateContext);
       const currentObserver = observers[key];
       const [state, setState] = React.useState(currentObserver.value);
@@ -99,9 +114,15 @@ export function createGalacticContext<
       }, [currentObserver]);
 
       return state;
-    }
+    };
 
-    function useSetter(): Setter<T[keyof T]> {
+    return acc;
+  }, {} as GetterMap<T>);
+
+  const setterHooks = Object.keys(mapping).reduce((acc, key: keyof T) => {
+    const hookName = `useSet${upperFirst(key as string)}`;
+    // @ts-ignore
+    acc[hookName] = function useSetter(): Setter<T[keyof T]> {
       const { observers, debug } = React.useContext(StateContext);
       const currentObserver = observers[key];
 
@@ -119,14 +140,16 @@ export function createGalacticContext<
         },
         [currentObserver, debug]
       );
-    }
-
-    acc[key] = [useValue, useSetter];
-
+    };
     return acc;
-  }, {} as HookMap<T>);
+  }, {} as SetterMap<T>);
 
-  return { ...hooks, StateProvider, StateContext };
+  return {
+    getters: getterHooks,
+    setters: setterHooks,
+    StateProvider,
+    StateContext,
+  };
 }
 
 function isFunction(val: any): val is Function {
