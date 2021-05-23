@@ -14,11 +14,7 @@ Easy, efficient state management with React Context.
 
 ## Motivation
 
-If you're using Context for "global" state, you run the risk of rerendering your entire app each time you update a value in a provider. This is because each Provider is a component, and when it rerenders, all of it's children will also rerender.
-
-You can also have complications if you have Provider state values that depend on each other. No Provider can _easily_ access the Context values of it's children.
-
-Context also has a lot of boilerplate that would be nice to reduce.
+Context has a lot of boilerplate that would be nice to reduce (though less than Redux). You can also have complications if you have Provider state values that depend on each other. No Provider can _easily_ access the Context values of it's children.
 
 Galactic Context allows you to have a single "StateProvider" to store all of the values you would consider using "globally" across components in your app. It generates "value" and "setter" hooks for you, and when a "setter" hook gets called to update state, only the components consuming the "value" hooks will update (not your entire app).
 
@@ -44,7 +40,7 @@ function App() {
     <CounterComponent label="component 2" /> // Both CounterComponents will update
     when the setter for `useCounter` is called.
     <EmailComponent /> // EmailComponent WON'T rerender when the setter for
-    `useCounter` is called. StateProvider won't cause rerenders at all.
+    `useCounter` is called.
   </StateProvider>;
 }
 
